@@ -1,0 +1,42 @@
+version: 2
+
+macros:
+  - name: billing_window
+    description: >
+      Returns the run's start_date and end_date: the day before exec_date minus
+      billing_lookback_days by default, or billing_start_date / billing_end_date on backfills.
+      Every incremental model reprocesses exactly these days.
+
+  - name: billing_urls
+    description: >
+      Builds the list of daily CSV URLs in the bucket. When billing_available_dates is set
+      (by the runner), only those days are used, so a missing file never breaks read_csv.
+    arguments:
+      - name: start_date
+        type: string
+        description: First day of the window (YYYY-MM-DD).
+      - name: end_date
+        type: string
+        description: Last day of the window (YYYY-MM-DD).
+
+  - name: get_where_subquery
+    description: >
+      Overrides dbt's built-in so a test's `where: "... __in_billing_window__"` is replaced by
+      the run's billing window: tests check only the days just loaded, not the whole history.
+    arguments:
+      - name: relation
+        type: relation
+        description: The model the test runs against.
+
+  - name: generate_schema_name
+    description: >
+      Names schemas after the folder path: the first two folder levels joined with '__', plus
+      '__intermediate' for models in an intermediate/ folder (e.g. marts/domain_finance/ ->
+      marts__domain_finance). Seeds get a 'seeds__' prefix. An explicit schema config still wins.
+    arguments:
+      - name: custom_schema_name
+        type: string
+        description: The schema set in config, if any (takes precedence).
+      - name: node
+        type: object
+        description: The model or seed being built.

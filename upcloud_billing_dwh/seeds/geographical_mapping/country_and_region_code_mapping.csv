@@ -1,0 +1,6 @@
+full_name,alpha_2,alpha_3,country_code,iso_3166_2,region,sub_region,intermediate_region,region_code,sub_region_code,intermediate_region_code
+Finland,FI,FIN,246,ISO 3166-2:FI,Europe,Northern Europe,"",150,154,""
+Germany,DE,DEU,276,ISO 3166-2:DE,Europe,Western Europe,"",150,155,""
+Japan,JP,JPN,392,ISO 3166-2:JP,Asia,Eastern Asia,"",142,030,""
+Poland,PL,POL,616,ISO 3166-2:PL,Europe,Eastern Europe,"",150,151,""
+United States of America,US,USA,840,ISO 3166-2:US,Americas,Northern America,"",019,021,""

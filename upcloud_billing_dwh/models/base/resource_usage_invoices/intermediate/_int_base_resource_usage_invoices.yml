@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: build_base_resource_usage_invoices
+    description: >
+      Intermediate step for creating the base layer over the daily Hive-partitioned billing CSVs
+      (billing/year=/month=/day=/billing.csv). Loaded incrementally with
+      delete+insert on partition_date, over a window that ends the day before
+      exec_date and goes back billing_lookback_days
+    columns:
+      - name: invoice_id
+        # scoped to the run's billing window (macros/get_where_subquery.sql) to avoid full scans
+        data_tests:
+          - not_null:
+              config:
+                where: "partition_date __in_billing_window__"
+          - unique:
+              config:
+                where: "partition_date __in_billing_window__"
+      - name: partition_date
+        # unfiltered on purpose: a window filter on partition_date drops the null rows
+        # this test is meant to catch (null = make_date failed on the hive path)
+        data_tests:
+          - not_null
+      # categorical columns: a new value upstream (a new tier, resource or currency) stops the
+      # build instead of flowing silently into the marts and the dashboard filters
+      - name: operation_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['compute', 'read', 'storage', 'write']
+              config:
+                where: "partition_date __in_billing_window__"
+      - name: service_tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['free', 'basic', 'pro', 'enterprise']
+              config:
+                where: "partition_date __in_billing_window__"
+      - name: resource_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['vm', 'db', 'container', 'function']
+              config:
+                where: "partition_date __in_billing_window__"
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EUR', 'USD', 'JPY']
+              config:
+                where: "partition_date __in_billing_window__"
+      - name: region_code
+        # dim_location is built from seeds only: a data centre billed but missing from the
+        # data_center_mapping seed would get no country in the fact, so stop the build instead
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: region_code
+              config:
+                where: "partition_date __in_billing_window__"

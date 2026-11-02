@@ -1,0 +1,95 @@
+# seeds/country_and_region_code_mapping.yml
+version: 2
+
+seeds:
+  - name: country_and_region_code_mapping
+    description: >
+      ISO 3166 country list with UN regional groupings, used to name countries and continents from
+      billing region codes. Trimmed to the countries that appear in the billing data (DE, FI, JP, PL, US);
+      add a row here when a new country shows up.
+    config:
+      # codes are identifiers, never computed on: kept as strings so leading zeros survive ('019')
+      column_types:
+        country_code: string
+        region_code: string
+        sub_region_code: string
+        intermediate_region_code: string
+    columns:
+      - name: full_name
+        description: "Country or territory name."
+      - name: alpha_2
+        description: "ISO 3166-1 two-letter code. Matches the country prefix of billing region codes (for example 'FI' for fi-hel1)."
+        data_tests:
+          - unique
+          - not_null
+      - name: alpha_3
+        description: "ISO 3166-1 three-letter code."
+      - name: country_code
+        description: "ISO 3166-1 numeric code, an identifier kept as a string (for example '246' for Finland, '004' for Afghanistan)."
+      - name: iso_3166_2
+        description: "ISO 3166-2 reference string."
+      - name: region
+        description: "UN continent-level region (Africa, Americas, Asia, Europe, Oceania)."
+      - name: sub_region
+        description: "UN sub-region."
+      - name: intermediate_region
+        description: "UN intermediate region. Empty for most countries."
+      - name: region_code
+        description: "UN M49 code for the region, kept as a string (for example '150' for Europe, '019' for the Americas)."
+      - name: sub_region_code
+        description: "UN M49 code for the sub-region, kept as a string (for example '030' for Eastern Asia)."
+      - name: intermediate_region_code
+        description: "UN M49 code for the intermediate region, kept as a string. Empty for most countries."
+
+  - name: city_code_mapping
+    description: >
+      Names of the cities that host the billed data centres. city_code is the location part of the
+      billing region code (for example HEL for fi-hel1). Covers only the cities in the billing data;
+      add a row here when a new city shows up.
+    columns:
+      - name: city_code
+        description: "Three-letter city code taken from the billing region code (for example 'HEL')."
+        data_tests:
+          - unique
+          - not_null
+      - name: city_name
+        description: "City name in English."
+        data_tests:
+          - not_null
+      - name: country_code
+        description: "ISO 3166-1 two-letter code of the city's country."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('country_and_region_code_mapping')
+                field: alpha_2
+
+  - name: data_center_mapping
+    description: >
+      One row per data centre in the billing data, keyed by the billing region code (for example
+      fi-hel2 = Helsinki, site 2). The source of dim_location, so the dimension does not depend on
+      the billing data. Add a row here when a new data centre shows up: the relationships test on
+      build_base_resource_usage_invoices.region_code fails until it is added.
+    config:
+      # an identifier like the region code it comes from, never computed on
+      column_types:
+        site_number: string
+    columns:
+      - name: region_code
+        description: "Billing region code: country, city code and site number (for example 'fi-hel1')."
+        data_tests:
+          - unique
+          - not_null
+      - name: city_code
+        description: "Three-letter city code of the data centre (for example 'HEL')."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('city_code_mapping')
+                field: city_code
+      - name: site_number
+        description: "Site number within the city, an identifier kept as a string (for example '2' for fi-hel2)."
+        data_tests:
+          - not_null

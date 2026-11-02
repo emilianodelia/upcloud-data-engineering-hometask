@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: build_report_billing_daily
+    description: >
+      Intermediate step for report_billing_daily. Aggregates fct_resource_usage_invoices to
+      one row per billing day, country, resource type, service tier and operation type,
+      with transaction counts and credits split by success.
+    data_tests:
+      # Ensuring daily grain is tested in the metrics 
+      # Reporting a duplicated revenue on any given day is a no-go 
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - billed_at
+              - country
+              - resource_type
+              - service_tier
+              - operation_type
+          config:
+            where: "billed_at __in_billing_window__"
+    columns:
+      - name: billed_at
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: country
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: resource_type
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: service_tier
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: operation_type
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"

@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: dim_location
+    description: >
+      One row per data centre (region code, for example fi-hel1), with its site, city, country
+      and continent. Join to facts on region_code. Built from the geographical seeds only
+      (data_center_mapping, city_code_mapping, country_and_region_code_mapping), so it does not
+      depend on the billing data. A billed region_code missing here fails the relationships test
+      on build_base_resource_usage_invoices; add the data centre to data_center_mapping.
+    columns:
+      - name: region_code
+        description: "{{ doc('col_region_code') }} Primary key."
+      - name: site_number
+        description: "{{ doc('col_site_number') }}"
+      - name: city_code
+        description: "{{ doc('col_city_code') }}"
+      - name: city_name
+        description: "{{ doc('col_city_name') }}"
+      - name: country_code
+        description: "{{ doc('col_country_code') }}"
+      - name: country_name
+        description: "{{ doc('col_country_name') }}"
+      - name: continent
+        description: "{{ doc('col_continent') }}"
+      - name: sub_region
+        description: "{{ doc('col_sub_region') }}"

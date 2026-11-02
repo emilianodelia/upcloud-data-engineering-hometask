@@ -1,0 +1,73 @@
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'upcloud_billing_dwh'
+version: '1.0.0'
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'upcloud_billing_dwh'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["models", "column_catalog"]  # column docs blocks live in column_catalog/
+
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+vars:
+  billing_base_url: "https://u1pfm.upcloudobjects.com/dwh-fina/billing"
+  billing_lookback_days: 2
+
+seeds:
+  upcloud_billing_dwh:
+    +delimiter: ","
+  
+models:
+
+  upcloud_billing_dwh:
+
+    base:
+      resource_usage_invoices:
+        +materialized: view
+        intermediate:
+          +materialized: incremental
+
+    core:
+      core_dimensional:
+
+        geographical_mapping:
+          +materialized: table
+          intermediate:
+            +materialized: table
+
+        resource_usage_invoices:
+          +materialized: view
+          intermediate:
+            +materialized: incremental
+
+    marts:
+
+      domain_client_ops:
+        client_usage:
+          +materialized: view
+          intermediate:
+            +materialized: incremental
+
+      domain_finance:
+        usage_invoice_reports:
+          +materialized: view
+          intermediate:
+            +materialized: incremental

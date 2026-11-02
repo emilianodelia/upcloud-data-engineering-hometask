@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: build_dim_location
+    description: >
+      Intermediate step for dim_location. Joins the data centres in data_center_mapping 
+      to their city and country names from the geographical seeds
+    columns:
+      - name: region_code
+        data_tests:
+          - unique
+          - not_null

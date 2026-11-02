@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: build_fct_resource_usage_invoices
+    description: "Intermediate step for fct_resource_usage_invoices. Flips credits to positive consumption and attaches each billing transaction's country from dim_location."
+    columns:
+      - name: invoice_id
+        # scoped to the run's billing window (macros/get_where_subquery.sql) to avoid full scans
+        data_tests:
+          - unique:
+              config:
+                where: "billed_at __in_billing_window__"
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: credits_consumed
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: is_successful
+        # null would be counted in total_transactions but in neither successful nor failed,
+        # so the marts' successful + failed would no longer add up to total
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"

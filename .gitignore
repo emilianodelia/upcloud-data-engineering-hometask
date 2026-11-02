@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+
+# dbt artefacts and local run logs
+logs/
+upcloud_billing_dwh/target/
+upcloud_billing_dwh/logs/
+upcloud_billing_dwh/dbt_packages/
+upcloud_billing_dwh/.user.yml
+
+# local warehouse files (build database, serving snapshot, temp files)
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+upcloud_billing_dwh/pipeline.lock
+.claude/
+.agents/

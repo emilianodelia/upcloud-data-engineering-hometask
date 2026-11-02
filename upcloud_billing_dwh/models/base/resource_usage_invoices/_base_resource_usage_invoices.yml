@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: base_resource_usage_invoices
+    description: >
+      Base layer over the daily Hive-partitioned billing CSVs
+      (billing/year=/month=/day=/billing.csv). Loaded incrementally with
+      delete+insert on partition_date, over a window that ends the day before
+      exec_date and goes back billing_lookback_days
+    columns:
+      - name: invoice_id
+        description: "{{ doc('col_invoice_id') }}"
+
+      - name: timestamp
+        description: "{{ doc('col_timestamp') }}"
+
+      - name: resource_id
+        description: "{{ doc('col_resource_id') }}"
+
+      - name: user_id
+        description: "{{ doc('col_user_id') }}"
+
+      - name: operation_type
+        description: "{{ doc('col_operation_type') }}"
+
+      - name: currency
+        description: "{{ doc('col_currency') }}"
+
+      - name: credit_usage
+        description: "{{ doc('col_credit_usage') }}"
+
+      - name: service_tier
+        description: "{{ doc('col_service_tier') }}"
+
+      - name: is_successful
+        description: "{{ doc('col_is_successful') }}"
+
+      - name: resource_type
+        description: "{{ doc('col_resource_type') }}"
+
+      - name: region_code
+        description: "{{ doc('col_region_code') }}"
+
+      - name: country_code
+        description: "{{ doc('col_country_code') }}"
+
+      - name: city_code
+        description: "{{ doc('col_city_code') }}"
+
+      - name: site_number
+        description: "{{ doc('col_site_number') }}"
+
+      - name: partition_date
+        description: "{{ doc('col_billing_date') }} Incremental unique key."
+
+      - name: source_file
+        description: "{{ doc('col_source_file') }}"
+
+      - name: dbt_invocation_id
+        description: "{{ doc('col_dbt_invocation_id') }}"
