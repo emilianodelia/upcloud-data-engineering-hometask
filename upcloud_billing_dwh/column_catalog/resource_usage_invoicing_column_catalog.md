@@ -114,22 +114,6 @@ First day of the billing month (date), from billed_at truncated to the month.
 Distinct users with at least one billing transaction in the period, across all tiers.
 {% enddocs %}
 
-{% docs col_active_free_tier_users %}
-Distinct users with at least one free tier transaction in the period.
-{% enddocs %}
-
-{% docs col_active_basic_tier_users %}
-Distinct users with at least one basic tier transaction in the period.
-{% enddocs %}
-
-{% docs col_active_pro_tier_users %}
-Distinct users with at least one pro tier transaction in the period.
-{% enddocs %}
-
-{% docs col_active_enterprise_tier_users %}
-Distinct users with at least one enterprise tier transaction in the period.
-{% enddocs %}
-
 ## Billing measures
 
 {% docs col_total_transactions %}

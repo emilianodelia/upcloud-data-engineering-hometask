@@ -11,8 +11,8 @@ Design decisions and how the pipeline works internally: [PLANNING.md](PLANNING.m
 |---|---|
 | Ingest Hive-partitioned CSVs | DuckDB reads the daily files straight from the bucket |
 | Preprocess | dbt base layer: types, cleans, splits region into country/city, hashes `user_id` |
-| Aggregate | dbt marts: daily reports by country, resource, tier, operation, and by client |
-| Insights (sums, averages) | dbt insight marts: credit usage per day, month and year (sliceable), by country, active users, pipeline health |
+| Aggregate | dbt marts, each reading the fact table: credit usage per day, month and year by country, resource, tier and operation; active users; pipeline health |
+| Insights (sums, averages) | Credits charged and uncharged, transactions, failure rate, average credits per transaction and per day, 7-day average, active users |
 | Insights shown | Streamlit dashboard: reads the insight marts as they are, no metric logic in Python |
 | New files are picked up | Each run checks which files exist and loads them; `make watch` runs hourly, `make reconcile` catches late or changed files |
 | Insights update dynamically | After tests pass, the marts are published to `serving.duckdb` and the dashboard reloads within 30 s |
@@ -78,13 +78,6 @@ flowchart TD
     S --> D["Streamlit dashboard<br/>checks every 30s, reloads on new snapshot"]
 ```
 
-In base and core, each `build_` model is an incremental table (`delete+insert` keyed on the day), so
-a daily run only touches the days in its window, not the whole history. The model without the
-prefix (`base_resource_usage_invoices`, `fct_resource_usage_invoices`) is a view over it: one stored
-copy per model. The marts' reports are plain tables: small aggregates of the fact, rebuilt in full on
-every run (under a second each). Every report reads the fact table, never another mart.
-Why, in [PLANNING.md](PLANNING.md#incremental-modelling).
-
 # Project layout
 
 ```
@@ -125,7 +118,7 @@ Changing the salt changes every `user_id`, so rebuild from scratch: `make clean 
 
 Changed a dbt model and want to check the data?
 
-Run the following command to open the DuckDB UI, where you can query any table the local pipeline runs have built in `billing.duckdb`. It needs the DuckDB command-line tool, version 1.2 or later (for example `brew install duckdb`); `requirements.txt` only installs the Python package.
+Open the DuckDB UI to query any table in `billing.duckdb`. It needs the DuckDB command-line tool, version 2.0 or later to match the pinned Python package that writes the file (for example `brew install duckdb`).
 
 ```bash
 duckdb -ui upcloud_billing_dwh/billing.duckdb
@@ -152,11 +145,6 @@ Close the session (`.quit`) before running the pipeline: an open connection bloc
 
 Both credit pages can be sliced by country, resource type, service tier and operation type (one value each, or All).
 Credits are always shown in millions (1 billion = 1,000.0M cr).
-
-**Every metric is defined in dbt, not in the dashboard.** The credit models use
-`group by <period>, cube(country, resource_type, service_tier, operation_type)`, which stores a row for every
-combination of the four dimensions plus an 'All' total for each, with its own failure rate. The dashboard only
-runs `select ... where country = ? and ...`: changing a metric is a change to a dbt model, with its docs and tests.
 
 # Data observations
 
