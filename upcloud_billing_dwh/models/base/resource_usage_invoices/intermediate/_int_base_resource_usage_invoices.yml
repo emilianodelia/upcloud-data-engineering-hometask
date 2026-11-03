@@ -2,11 +2,7 @@ version: 2
 
 models:
   - name: build_base_resource_usage_invoices
-    description: >
-      Intermediate step for creating the base layer over the daily Hive-partitioned billing CSVs
-      (billing/year=/month=/day=/billing.csv). Loaded incrementally with
-      delete+insert on partition_date, over a window that ends the day before
-      exec_date and goes back billing_lookback_days
+    description: "Incremental table behind base_resource_usage_invoices: reloads the run's billing window by partition_date."
     columns:
       - name: invoice_id
         # scoped to the run's billing window (macros/get_where_subquery.sql) to avoid full scans

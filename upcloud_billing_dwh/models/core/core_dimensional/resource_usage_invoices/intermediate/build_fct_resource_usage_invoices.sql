@@ -44,7 +44,12 @@ final as (
 
         -- how much: credits are stored negative for consumption, flip the sign once here
         -- so every mart reads consumption as positive
-        -1 * invoices.credit_usage as credits_consumed
+        -1 * invoices.credit_usage as credits_consumed,
+
+        -- business rule, defined only here: a transaction's credits are charged when it
+        -- succeeded, and uncharged when it failed. Every report sums these two columns.
+        case when invoices.is_successful then -1 * invoices.credit_usage else 0 end as credits_charged,
+        case when not invoices.is_successful then -1 * invoices.credit_usage else 0 end as credits_uncharged
 
     from invoices
     left join {{ ref('dim_location') }}

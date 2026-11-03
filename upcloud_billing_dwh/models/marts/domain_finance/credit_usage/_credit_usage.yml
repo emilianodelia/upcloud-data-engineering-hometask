@@ -1,0 +1,194 @@
+version: 2
+
+models:
+  - name: report_credit_usage_daily
+    description: "Daily credits and transactions per country, resource type, service tier and operation type, with 'All' rows for totals."
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - billed_at
+              - country
+              - resource_type
+              - service_tier
+              - operation_type
+    columns:
+      - name: billed_at
+        description: "{{ doc('col_billing_date') }}"
+        data_tests:
+          - not_null
+      - name: country
+        description: "{{ doc('col_country_name') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: resource_type
+        description: "{{ doc('col_resource_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: service_tier
+        description: "{{ doc('col_service_tier') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: operation_type
+        description: "{{ doc('col_operation_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: credits_charged
+        description: "{{ doc('col_credits_charged') }}"
+      - name: credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }}"
+      - name: total_transactions
+        description: "{{ doc('col_total_transactions') }}"
+      - name: successful_transactions
+        description: "{{ doc('col_successful_transactions') }}"
+      - name: failed_transactions
+        description: "{{ doc('col_failed_transactions') }}"
+      - name: failure_rate
+        description: "{{ doc('col_failure_rate') }}"
+      - name: avg_credits_per_transaction
+        description: "{{ doc('col_avg_credits_per_transaction') }}"
+      - name: credits_charged_7d_avg
+        description: "Average credits_charged of the days loaded in the last 7 days (this day included), same slice."
+
+  - name: report_credit_usage_monthly
+    description: "Monthly credits and transactions per country, resource type, service tier and operation type, with 'All' rows for totals."
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - billed_month
+              - country
+              - resource_type
+              - service_tier
+              - operation_type
+    columns:
+      - name: billed_month
+        description: "{{ doc('col_billed_month') }}"
+        data_tests:
+          - not_null
+      - name: country
+        description: "{{ doc('col_country_name') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: resource_type
+        description: "{{ doc('col_resource_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: service_tier
+        description: "{{ doc('col_service_tier') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: operation_type
+        description: "{{ doc('col_operation_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: days_loaded
+        description: "{{ doc('col_days_loaded') }}"
+      - name: is_partial
+        description: "{{ doc('col_is_partial') }}"
+        data_tests:
+          - not_null
+      - name: credits_charged
+        description: "{{ doc('col_credits_charged') }}"
+      - name: credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }}"
+      - name: total_transactions
+        description: "{{ doc('col_total_transactions') }}"
+      - name: successful_transactions
+        description: "{{ doc('col_successful_transactions') }}"
+      - name: failed_transactions
+        description: "{{ doc('col_failed_transactions') }}"
+      - name: failure_rate
+        description: "{{ doc('col_failure_rate') }}"
+      - name: avg_credits_per_transaction
+        description: "{{ doc('col_avg_credits_per_transaction') }}"
+      - name: avg_daily_credits_charged
+        description: "{{ doc('col_avg_daily_credits_charged') }}"
+      - name: avg_daily_credits_uncharged
+        description: "{{ doc('col_avg_daily_credits_uncharged') }}"
+
+  - name: report_credit_usage_yearly
+    description: "Yearly credits and transactions per country, resource type, service tier and operation type, with 'All' rows for totals."
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - billed_year
+              - country
+              - resource_type
+              - service_tier
+              - operation_type
+    columns:
+      - name: billed_year
+        description: "First day of the billing year (date)."
+        data_tests:
+          - not_null
+      - name: country
+        description: "{{ doc('col_country_name') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: resource_type
+        description: "{{ doc('col_resource_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: service_tier
+        description: "{{ doc('col_service_tier') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: operation_type
+        description: "{{ doc('col_operation_type') }} {{ doc('col_report_dimension') }}"
+        data_tests:
+          - not_null
+      - name: days_loaded
+        description: "{{ doc('col_days_loaded') }}"
+      - name: is_partial
+        description: "{{ doc('col_is_partial') }}"
+        data_tests:
+          - not_null
+      - name: credits_charged
+        description: "{{ doc('col_credits_charged') }}"
+      - name: credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }}"
+      - name: total_transactions
+        description: "{{ doc('col_total_transactions') }}"
+      - name: successful_transactions
+        description: "{{ doc('col_successful_transactions') }}"
+      - name: failed_transactions
+        description: "{{ doc('col_failed_transactions') }}"
+      - name: failure_rate
+        description: "{{ doc('col_failure_rate') }}"
+      - name: avg_credits_per_transaction
+        description: "{{ doc('col_avg_credits_per_transaction') }}"
+      - name: avg_daily_credits_charged
+        description: "{{ doc('col_avg_daily_credits_charged') }}"
+      - name: avg_daily_credits_uncharged
+        description: "{{ doc('col_avg_daily_credits_uncharged') }}"
+
+  - name: report_credit_usage_by_country_daily
+    description: "Daily charged and uncharged credits, one column pair per country."
+    columns:
+      - name: billed_at
+        description: "{{ doc('col_billing_date') }}"
+        data_tests:
+          - unique
+          - not_null
+      - name: finland_credits_charged
+        description: "{{ doc('col_credits_charged') }} Finland only."
+      - name: finland_credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }} Finland only."
+      - name: germany_credits_charged
+        description: "{{ doc('col_credits_charged') }} Germany only."
+      - name: germany_credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }} Germany only."
+      - name: japan_credits_charged
+        description: "{{ doc('col_credits_charged') }} Japan only."
+      - name: japan_credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }} Japan only."
+      - name: poland_credits_charged
+        description: "{{ doc('col_credits_charged') }} Poland only."
+      - name: poland_credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }} Poland only."
+      - name: usa_credits_charged
+        description: "{{ doc('col_credits_charged') }} United States of America only."
+      - name: usa_credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }} United States of America only."

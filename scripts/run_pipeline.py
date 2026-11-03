@@ -45,10 +45,13 @@ SNAPSHOT = "ops__serving.snapshot"          # one row: when serving.duckdb was p
 
 # copied to serving.duckdb on publish: everything the dashboard reads, nothing else
 SERVED_TABLES = [
-    "marts__domain_finance.report_billing_daily",
-    "marts__domain_client_ops.report_client_usage_daily",
-    MANIFEST,
-    RECONCILE_LOG,
+    "marts__domain_finance.report_credit_usage_daily",
+    "marts__domain_finance.report_credit_usage_monthly",
+    "marts__domain_finance.report_credit_usage_yearly",
+    "marts__domain_finance.report_credit_usage_by_country_daily",
+    "marts__domain_client_ops.report_active_users_daily",
+    "marts__domain_data_ops.report_pipeline_health_daily",
+    "marts__domain_data_ops.report_pipeline_health_summary",
 ]
 
 
@@ -183,23 +186,28 @@ def load(dates, full_refresh=False):
         "billing_end_date": dates[-1],
         "billing_available_dates": dates,
     }
+    args = ["-s", SELECTOR, "--vars", json.dumps(vars_)] + (["--full-refresh"] if full_refresh else [])
+    dbt_build(*args)
+    with duckdb.connect(str(DB_PATH)) as con:
+        mark_loaded(con, dates)
+    publish()
+
+
+def dbt_build(*args):
     # use the dbt installed next to this Python (e.g. .venv/bin/dbt), so the runner works
     # from a virtualenv without activating it; fall back to whatever dbt is on PATH
     venv_dbt = next((p for p in (Path(sys.executable).parent / n for n in ("dbt", "dbt.exe")) if p.exists()), None)
     dbt = str(venv_dbt) if venv_dbt else shutil.which("dbt") or "dbt"
-    cmd = [dbt, "build", "-s", SELECTOR, "--profiles-dir", str(PROJECT_DIR), "--vars", json.dumps(vars_)]
-    if full_refresh:
-        cmd.append("--full-refresh")
-    subprocess.run(cmd, cwd=PROJECT_DIR, check=True)
-    with duckdb.connect(str(DB_PATH)) as con:
-        mark_loaded(con, dates)
-    publish()
+    subprocess.run([dbt, "build", "--profiles-dir", str(PROJECT_DIR), *args], cwd=PROJECT_DIR, check=True)
 
 
 def publish():
     """Copy what the dashboard reads into a fresh file and swap it in with one atomic rename.
     Runs only after dbt build (models + tests) succeeded, so a failed run never reaches the dashboard:
     it keeps showing the last good snapshot. Readers holding the old file are unaffected."""
+    # the health models read the file manifest, which this runner writes after dbt (mark_loaded) and
+    # on reconciles that load nothing: rebuild it here so the snapshot never shows a stale manifest
+    dbt_build("-s", "report_pipeline_health_daily", "report_pipeline_health_summary")
     tmp = SERVING_PATH.with_name(SERVING_PATH.name + ".tmp")
     tmp.unlink(missing_ok=True)
     with duckdb.connect(str(tmp)) as con:
@@ -210,7 +218,7 @@ def publish():
         con.execute(f"create schema if not exists {SNAPSHOT.split('.')[0]}")
         con.execute(f"""create table {SNAPSHOT} as select
             now()::timestamp as published_at,
-            (select max(billed_at) from marts__domain_finance.report_billing_daily) as data_through""")
+            (select max(billed_at) from marts__domain_finance.report_credit_usage_daily) as data_through""")
         con.execute("detach build")
         con.execute("checkpoint")  # everything in the main file, no .wal left behind
     os.replace(tmp, SERVING_PATH)  # atomic rename on the same filesystem

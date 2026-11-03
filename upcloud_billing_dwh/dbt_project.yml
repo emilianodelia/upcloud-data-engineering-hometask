@@ -60,14 +60,14 @@ models:
 
     marts:
 
-      domain_client_ops:
-        client_usage:
-          +materialized: view
-          intermediate:
-            +materialized: incremental
-
       domain_finance:
-        usage_invoice_reports:
-          +materialized: view
-          intermediate:
-            +materialized: incremental
+        credit_usage:
+          +materialized: table
+
+      domain_client_ops:
+        active_users:
+          +materialized: table
+
+      domain_data_ops:
+        pipeline_health:
+          +materialized: table

@@ -2,11 +2,7 @@ version: 2
 
 models:
   - name: base_resource_usage_invoices
-    description: >
-      Base layer over the daily Hive-partitioned billing CSVs
-      (billing/year=/month=/day=/billing.csv). Loaded incrementally with
-      delete+insert on partition_date, over a window that ends the day before
-      exec_date and goes back billing_lookback_days
+    description: "Daily billing CSVs from the bucket, typed and cleaned: one row per transaction."
     columns:
       - name: invoice_id
         description: "{{ doc('col_invoice_id') }}"

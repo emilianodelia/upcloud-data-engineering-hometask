@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: build_fct_resource_usage_invoices
-    description: "Intermediate step for fct_resource_usage_invoices. Flips credits to positive consumption and attaches each billing transaction's country from dim_location."
+    description: "Incremental table behind fct_resource_usage_invoices: adds the country from dim_location and the charged / uncharged credits."
     columns:
       - name: invoice_id
         # scoped to the run's billing window (macros/get_where_subquery.sql) to avoid full scans
@@ -23,5 +23,24 @@ models:
         # so the marts' successful + failed would no longer add up to total
         data_tests:
           - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: credits_charged
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: credits_uncharged
+        data_tests:
+          - not_null:
+              config:
+                where: "billed_at __in_billing_window__"
+      - name: country
+        # the report report_credit_usage_by_country_daily has one column pair per country:
+        # a new country stops the build here until its columns are added there
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Finland', 'Germany', 'Japan', 'Poland', 'United States of America']
               config:
                 where: "billed_at __in_billing_window__"

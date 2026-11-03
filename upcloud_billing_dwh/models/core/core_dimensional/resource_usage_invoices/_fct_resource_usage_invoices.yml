@@ -2,18 +2,7 @@ version: 2
 
 models:
   - name: fct_resource_usage_invoices
-    description: >
-      One row per billing transaction (invoice_id), with credits consumed and the location
-      resolved to a country. Aggregate in the marts layer.
-
-      Amounts are in credits, a platform unit, not money: credit_usage has the same distribution
-      (0.01 to 100 per transaction) whatever the client's currency, so it is not converted to EUR.
-      What a credit costs depends on each client's agreed rate, which is not in the source; the
-      client's billing currency is kept for reference only.
-
-      Location is resolved through dim_location by region_code. Only the country is
-      kept, because each country currently has one city. Add city_name to the select
-      if that changes.
+    description: "One row per billing transaction, with its country and credits charged and uncharged (platform unit, not money)."
     columns:
       - name: user_id
         description: "{{ doc('col_user_id') }}"
@@ -35,3 +24,7 @@ models:
         description: "{{ doc('col_billing_currency') }}"
       - name: credits_consumed
         description: "{{ doc('col_credits_consumed') }}"
+      - name: credits_charged
+        description: "{{ doc('col_credits_charged') }}"
+      - name: credits_uncharged
+        description: "{{ doc('col_credits_uncharged') }}"

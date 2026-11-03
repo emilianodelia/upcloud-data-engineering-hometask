@@ -1,0 +1,58 @@
+version: 2
+
+sources:
+  # written by scripts/run_pipeline.py (not dbt) into the build database
+  - name: ops_ingestion
+    schema: ops__ingestion
+    tables:
+      - name: billing_file_manifest
+        description: "Daily billing files probed by the runner: bucket status, ETag and the ETag loaded."
+
+models:
+  - name: report_pipeline_health_daily
+    description: "One row per daily billing file: found, loaded, changed since loading, and rows loaded."
+    columns:
+      - name: file_date
+        description: "Date of the daily file (and billed_at of its rows)."
+        data_tests:
+          - unique
+          - not_null
+      - name: file_status
+        description: "What the bucket answered on the last check: found (200), missing (404) or error."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['found', 'missing', 'error']
+      - name: is_loaded
+        description: "A version of the file was loaded into the warehouse."
+        data_tests:
+          - not_null
+      - name: is_stale
+        description: "The file changed in the bucket after it was loaded; make reconcile reloads it."
+        data_tests:
+          - not_null
+      - name: loaded_at
+        description: "When the runner last loaded the file."
+      - name: rows_loaded
+        description: "Billing transactions loaded for that day (0 if none)."
+        data_tests:
+          - not_null
+
+  - name: report_pipeline_health_summary
+    description: "Pipeline headline numbers: last day loaded, files loaded, missing and changed."
+    columns:
+      - name: last_day_loaded
+        description: "Latest file date that was loaded."
+      - name: files_loaded
+        description: "Files with a version loaded into the warehouse."
+        data_tests:
+          - not_null
+      - name: files_missing
+        description: "Files the bucket answered 404 for on the last check."
+        data_tests:
+          - not_null
+      - name: files_changed_since_loaded
+        description: "Files that changed in the bucket after they were loaded; make reconcile reloads them."
+        data_tests:
+          - not_null

@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: report_active_users_daily
+    description: "Daily count of distinct users with at least one transaction."
+    columns:
+      - name: billed_at
+        description: "{{ doc('col_billing_date') }}"
+        data_tests:
+          - unique
+          - not_null
+      - name: active_users
+        description: "{{ doc('col_active_users') }}"
+        data_tests:
+          - not_null

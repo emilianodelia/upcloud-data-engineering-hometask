@@ -12,7 +12,8 @@ Design decisions and how the pipeline works internally: [PLANNING.md](PLANNING.m
 | Ingest Hive-partitioned CSVs | DuckDB reads the daily files straight from the bucket |
 | Preprocess | dbt base layer: types, cleans, splits region into country/city, hashes `user_id` |
 | Aggregate | dbt marts: daily reports by country, resource, tier, operation, and by client |
-| Insights (sums, averages) | Streamlit dashboard: totals, failure rates, period comparisons, active users |
+| Insights (sums, averages) | dbt insight marts: credit usage per day, month and year (sliceable), by country, active users, pipeline health |
+| Insights shown | Streamlit dashboard: reads the insight marts as they are, no metric logic in Python |
 | New files are picked up | Each run checks which files exist and loads them; `make watch` runs hourly, `make reconcile` catches late or changed files |
 | Insights update dynamically | After tests pass, the marts are published to `serving.duckdb` and the dashboard reloads within 30 s |
 | Documentation before code | [PLANNING.md](PLANNING.md), written before the implementation |
@@ -65,8 +66,8 @@ flowchart TD
         B["Base: build_base_resource_usage_invoices<br/>read the window's CSVs over HTTPS<br/>type, hash user_id, add source_file"] --> TB{"Tests on<br/>window days"}
         TB -- pass --> C["Core: build_fct_resource_usage_invoices<br/>window days from base + dim_location"]
         C --> TC{"Tests on<br/>window days"}
-        TC -- pass --> R["Marts: build_report_billing_daily<br/>build_report_client_usage_daily<br/>window days re-aggregated"]
-        R --> TR{"Tests on<br/>window days"}
+        TC -- pass --> R["Marts: report_credit_usage_*<br/>report_active_users_daily<br/>report_pipeline_health_*<br/>rebuilt in full from the fact"]
+        R --> TR{"Tests on<br/>report tables"}
     end
 
     TB -- fail --> K
@@ -77,10 +78,12 @@ flowchart TD
     S --> D["Streamlit dashboard<br/>checks every 30s, reloads on new snapshot"]
 ```
 
-Each `build_` model is an incremental table (`delete+insert` keyed on the day), so a daily run
-only touches the days in its window, not the whole history. The model without the prefix
-(`fct_resource_usage_invoices`, `report_billing_daily`, ...) is a view over it: one stored copy per
-layer. Why, in [PLANNING.md](PLANNING.md#incremental-modelling).
+In base and core, each `build_` model is an incremental table (`delete+insert` keyed on the day), so
+a daily run only touches the days in its window, not the whole history. The model without the
+prefix (`base_resource_usage_invoices`, `fct_resource_usage_invoices`) is a view over it: one stored
+copy per model. The marts' reports are plain tables: small aggregates of the fact, rebuilt in full on
+every run (under a second each). Every report reads the fact table, never another mart.
+Why, in [PLANNING.md](PLANNING.md#incremental-modelling).
 
 # Project layout
 
@@ -100,7 +103,7 @@ layer. Why, in [PLANNING.md](PLANNING.md#incremental-modelling).
 
 # Business Rules
 
-* **Credits charged** = credits of successful transactions. Failed ones are reported in the `credits_failed` column.
+* **Credits charged** = credits of successful transactions; **credits uncharged** = credits of failed ones. Defined once, as two columns of `fct_resource_usage_invoices`: every report sums them.
 * **Active user** = at least one transaction in the period, successful or not.
 * **Latest data is always yesterday**: files arrive once a day.
 
@@ -132,22 +135,28 @@ For example:
 
 ```sql
 select *
-from marts__domain_finance.report_billing_daily
-limit 10
+from marts__domain_finance.report_credit_usage_daily
+where country = 'All' and resource_type = 'All' and service_tier = 'All' and operation_type = 'All'
+order by billed_at
 ```
 
 Close the session (`.quit`) before running the pipeline: an open connection blocks it.
 
 # The dashboard
 
-| Page             | Shows                                                                          |
-| ---------------- | ------------------------------------------------------------------------------ |
-| **Overview**     | Latest day, month to date and all history, compared with the previous period  |
-| **Explore**      | Any measure by any dimension: ranking, trend and heatmap                       |
-| **Active users** | Monthly active users                                                           |
-| **Data health**  | Last day loaded, gaps, rows per day, reconcile results, file manifest          |
+| Page                      | Shows                                                                                              | dbt model(s)                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Credit usage, daily**   | Latest day: credits charged and uncharged, transactions (successful, failed, rate), active users; credits per day with a 7-day average; usage by country | `report_credit_usage_daily`, `report_credit_usage_by_country_daily`, `report_active_users_daily` |
+| **Credit usage, history** | The same metrics per day, month or year, with partial periods marked                              | `report_credit_usage_daily`, `_monthly`, `_yearly`                            |
+| **Pipeline health**       | Last day loaded, files loaded / missing / changed since loading, rows loaded per day               | `report_pipeline_health_daily`                                                |
 
-The sidebar filters (country, resource type, service tier, operation type) apply to Overview and Explore; the date range applies to Explore only.
+Both credit pages can be sliced by country, resource type, service tier and operation type (one value each, or All).
+Credits are always shown in millions (1 billion = 1,000.0M cr).
+
+**Every metric is defined in dbt, not in the dashboard.** The credit models use
+`group by <period>, cube(country, resource_type, service_tier, operation_type)`, which stores a row for every
+combination of the four dimensions plus an 'All' total for each, with its own failure rate. The dashboard only
+runs `select ... where country = ? and ...`: changing a metric is a change to a dbt model, with its docs and tests.
 
 # Data observations
 

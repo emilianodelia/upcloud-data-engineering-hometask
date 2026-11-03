@@ -15,7 +15,7 @@ To choose the right tools, I first looked at what the task requires. The deliver
 
 Given this deliverable, I need a framework that is able to:
 
-* Connect with an S3 bucket and read Hive-partitioned data automatically within the range of availability
+* Connect with an S3 bucket and read Hive-partitioned data automatically, this is key (I do not want the loading step to become a separate process)
 * Trigger an ingestion (that my personal laptop can handle) and that can mimic a daily ingestion
 * Give me the flexibility to perform backfills and be aware of gaps in my data
 * Let me manipulate and transform the raw data coming from the ingestion process so that I can create data products that are capable of answering relevant business questions
@@ -139,11 +139,11 @@ flowchart TD
         C["build_fct_<br/>incremental table"] -.-> CV["fct_<br/>view"]
     end
     subgraph marts ["Marts"]
-        M["build_report_billing_daily<br/>build_report_client_usage_daily<br/>incremental tables"] -.-> MV["report_billing_daily<br/>report_client_usage_daily<br/>views"]
+        M["report_*<br/>tables rebuilt in full"]
     end
     BV -- "09–11 Jan only" --> C
-    CV -- "09–11 Jan only" --> M
-    MV --> P["Publish: copy to<br/>serving.duckdb"]
+    CV -- "whole fact, aggregated" --> M
+    M --> P["Publish: copy to<br/>serving.duckdb"]
 ```
 
 **One stored table per layer.** The `build_` model holds the data and the tests, the model without the prefix is a view over it, the stable name downstream models and the dashboard read.

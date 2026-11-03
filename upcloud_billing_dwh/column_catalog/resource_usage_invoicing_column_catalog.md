@@ -141,18 +141,48 @@ Number of successful billing transactions. Additive.
 {% enddocs %}
 
 {% docs col_failed_transactions %}
-Number of failed billing transactions. Additive. Failure rate = failed_transactions / total_transactions,
-computed after summing, never averaged across rows.
+Number of failed billing transactions. Additive.
+{% enddocs %}
+
+## Credit usage reports
+
+{% docs col_failure_rate %}
+failed_transactions / total_transactions, as a fraction (0.05 = 5%).
+{% enddocs %}
+
+{% docs col_avg_credits_per_transaction %}
+credits_charged / successful_transactions: what a charged transaction costs on average.
+{% enddocs %}
+
+{% docs col_days_loaded %}
+Number of days of the period with data loaded.
+{% enddocs %}
+
+{% docs col_is_partial %}
+True when fewer days are loaded than the period has (the period is still running, or a day is missing).
+A partial period is not comparable with a full one.
+{% enddocs %}
+
+{% docs col_avg_daily_credits_charged %}
+credits_charged / days_loaded, so a partial period compares with a full one.
+{% enddocs %}
+
+{% docs col_avg_daily_credits_uncharged %}
+credits_uncharged / days_loaded.
+{% enddocs %}
+
+{% docs col_report_dimension %}
+'All' on the rows that total every value of this column (see the model description).
 {% enddocs %}
 
 {% docs col_credits_charged %}
-Credits consumed by successful transactions, consumption positive. Additive.
-Failed transactions are excluded. Platform unit, not money.
+Credits of successful transactions, consumption positive (0 for a failed one). Additive.
+The rule is defined once, in fct_resource_usage_invoices. Platform unit, not money.
 {% enddocs %}
 
-{% docs col_credits_failed %}
-Credits of transactions whose billing failed, i.e. consumed but not charged. Consumption positive.
-Additive. Not included in credits_charged.
+{% docs col_credits_uncharged %}
+Credits of failed transactions: consumed but not charged, consumption positive (0 for a successful
+one). Additive. Not included in credits_charged. Defined once, in fct_resource_usage_invoices.
 {% enddocs %}
 
 ## Lineage
