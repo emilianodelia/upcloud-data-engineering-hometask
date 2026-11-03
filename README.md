@@ -27,12 +27,16 @@ Design decisions and how the pipeline works internally: [PLANNING.md](PLANNING.m
 
 Requirements: Python 3.10+, `make`, internet access.
 
+> [!IMPORTANT]
+> **The first run takes about 10 minutes.** `make demo` downloads 42 daily billing files (about 265 MB each)
+> before the dashboard opens. Later runs only load the new days.
+
 ```bash
 make demo
 ```
 
 Sets up `.venv`, loads Dec 2025 to Jan 11 2026, runs all models and tests, and opens the dashboard at
-http://localhost:8501. The first run takes about 10 minutes (mostly downloading files).
+http://localhost:8501.
 
 | Command          | When to use it                                                                                     |
 | ---------------- | -------------------------------------------------------------------------------------------------- |
